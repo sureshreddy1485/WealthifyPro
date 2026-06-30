@@ -203,13 +203,7 @@ export default function SettingsScreen() {
             title="How to use WealthifyPro"
             description="Quick guide for Notes, Ledger & EMI"
             left={props => <List.Icon {...props} icon="help-circle" />}
-            onPress={() => {
-              showAlert({
-                title: 'Welcome to WealthifyPro',
-                message: '1. Notes: Create text records and assign values.\n2. Ledger: Calculate simple or compound interest.\n3. EMI: Generate loan amortization schedules.\nUse the folder icons to organize your data!',
-                confirmText: 'Got it!'
-              });
-            }}
+            onPress={() => router.push('/tutorial')}
           />
           <List.Item
             title="Check for Updates"
