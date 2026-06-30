@@ -13,6 +13,7 @@ import { useSyncStore } from '@/store/syncStore';
 import { api } from '@/store/authStore';
 import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Updates from 'expo-updates';
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -96,6 +97,32 @@ export default function SettingsScreen() {
     } catch (e) {
       setSyncStatus('error');
       showAlert({ title: 'Sync Failed', message: 'Could not connect to cloud. Please try again later.' });
+    }
+  };
+
+  const handleCheckUpdates = async () => {
+    try {
+      showAlert({ title: 'Checking...', message: 'Checking for new updates...' });
+      
+      const update = await Updates.checkForUpdateAsync();
+      
+      if (update.isAvailable) {
+        // Download the update
+        await Updates.fetchUpdateAsync();
+        
+        // Ask user to restart to apply
+        showAlert({
+          title: 'Update Downloaded!',
+          message: 'Restart your app to install the latest update.',
+          confirmText: 'Restart Now',
+          showCancel: true,
+          onConfirm: () => Updates.reloadAsync(),
+        });
+      } else {
+        showAlert({ title: 'Up to Date', message: 'You are already on the latest version.' });
+      }
+    } catch (error) {
+      showAlert({ title: 'Update Error', message: 'Failed to check for updates. Make sure you have an active internet connection.' });
     }
   };
 
@@ -185,6 +212,12 @@ export default function SettingsScreen() {
             description="Send a local test notification"
             left={props => <List.Icon {...props} icon="bell-ring" />}
             onPress={handleTestNotification}
+          />
+          <List.Item
+            title="Check for Updates"
+            description="Manually check for and install OTA updates"
+            left={props => <List.Icon {...props} icon="cellphone-arrow-down" />}
+            onPress={handleCheckUpdates}
           />
         </List.Section>
       </ScrollView>

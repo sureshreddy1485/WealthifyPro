@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "frontend",
-    "slug": "frontend",
+    "slug": "wealthifypro-jqnbeqzbbhkmtfmp9c5kb",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -44,6 +44,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8214b278-091c-4963-ac6d-9e6c896ad016"
+      }
+    },
+    "owner": "sureshsekhar27",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/8214b278-091c-4963-ac6d-9e6c896ad016"
     }
   }
 }
