@@ -101,6 +101,10 @@ export default function SettingsScreen() {
   };
 
   const handleCheckUpdates = async () => {
+    if (__DEV__) {
+      showAlert({ title: 'Development Mode', message: 'OTA updates are not available in Expo Go or development builds. Please test this in the compiled APK.' });
+      return;
+    }
     try {
       showAlert({ title: 'Checking...', message: 'Checking for new updates...' });
       
@@ -206,12 +210,6 @@ export default function SettingsScreen() {
                 confirmText: 'Got it!'
               });
             }}
-          />
-          <List.Item
-            title="Test Push Notifications"
-            description="Send a local test notification"
-            left={props => <List.Icon {...props} icon="bell-ring" />}
-            onPress={handleTestNotification}
           />
           <List.Item
             title="Check for Updates"

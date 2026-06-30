@@ -150,18 +150,6 @@ export default function SignupScreen() {
           >
             {loading ? 'CONNECTING...' : 'SIGN UP'}
           </Button>
-
-          {loading && (
-            <View style={{ marginTop: 24, alignItems: 'center' }}>
-              <ActivityIndicator animating={true} color={theme.colors.primary} size="large" />
-              <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: 'bold', marginTop: 16, textAlign: 'center' }}>
-                Connecting to Cloud...
-              </Text>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 6, textAlign: 'center', paddingHorizontal: 10 }}>
-                Please hold on! Free cloud servers may take up to 50 seconds to wake up from sleep.
-              </Text>
-            </View>
-          )}
         </Surface>
 
         <View style={styles.footerContainer}>
