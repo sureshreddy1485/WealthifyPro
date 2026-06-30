@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { Text, TextInput, Button, useTheme, Surface, Checkbox } from 'react-native-paper';
+import { Text, TextInput, Button, useTheme, Surface, Checkbox, ActivityIndicator } from 'react-native-paper';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore, api } from '@/store/authStore';
@@ -164,8 +164,20 @@ export default function LoginScreen() {
             style={styles.button} 
             labelStyle={styles.buttonText}
           >
-            LOGIN
+            {loading ? 'CONNECTING...' : 'LOGIN'}
           </Button>
+
+          {loading && (
+            <View style={{ marginTop: 24, alignItems: 'center' }}>
+              <ActivityIndicator animating={true} color={theme.colors.primary} size="large" />
+              <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: 'bold', marginTop: 16, textAlign: 'center' }}>
+                Connecting to Cloud...
+              </Text>
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 6, textAlign: 'center', paddingHorizontal: 10 }}>
+                Please hold on! Free cloud servers may take up to 50 seconds to wake up from sleep.
+              </Text>
+            </View>
+          )}
         </Surface>
 
         <View style={styles.footerContainer}>
