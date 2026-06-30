@@ -1,10 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, TextInput, Button, useTheme, Portal, Dialog, IconButton } from 'react-native-paper';
+import { Text, TextInput, Button, useTheme, Portal, Dialog, IconButton, Modal, List, Appbar } from 'react-native-paper';
 import { DatePickerModal, en, registerTranslation } from 'react-native-paper-dates';
 import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { useNoteStore } from '@/store/noteStore';
+import { useLedgerStore } from '@/store/ledgerStore';
 import CustomAlert from '@/components/CustomAlert';
+import ViewShot from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 
 registerTranslation('en', en);
 
@@ -17,12 +20,8 @@ function getDays30360(d1: Date, d2: Date) {
   let month2 = d2.getMonth() + 1;
   let year2 = d2.getFullYear();
 
-  if (day1 === 31) {
-    day1 = 30;
-  }
-  if (day2 === 31 && day1 === 30) {
-    day2 = 30;
-  }
+  if (day1 === 31) day1 = 30;
+  if (day2 === 31 && day1 === 30) day2 = 30;
 
   return 360 * (year2 - year1) + 30 * (month2 - month1) + (day2 - day1);
 }
@@ -39,24 +38,27 @@ export default function NoteCalculatorScreen() {
   const [rate, setRate] = useState('');
 
   // Workflow State
-  const [markGivenDialogVisible, setMarkGivenDialogVisible] = useState(false);
   const [deleteNoteDialogVisible, setDeleteNoteDialogVisible] = useState(false);
+  const [saveModalVisible, setSaveModalVisible] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
   
+  const { folders, addLedger, addFolder } = useLedgerStore();
+
   const [calcResult, setCalcResult] = useState<{
+    principal: number;
     interest: number;
     total: number;
     duration: number;
+    rate: number;
   } | null>(null);
 
   const [alertConfig, setAlertConfig] = useState({
-    visible: false,
-    title: '',
-    message: '',
+    visible: false, title: '', message: '',
   });
 
-  const showAlert = (title: string, message: string) => {
-    setAlertConfig({ visible: true, title, message });
-  };
+  const showAlert = (title: string, message: string) => setAlertConfig({ visible: true, title, message });
+  const viewShotRef = useRef<any>(null);
 
   const durationDays = useMemo(() => {
     if (!note) return 0;
@@ -88,28 +90,79 @@ export default function NoteCalculatorScreen() {
     const interest = p * dailyRateMultiplier * d;
     const total = p + interest;
 
-    setCalcResult({ interest, total, duration: d });
-    setMarkGivenDialogVisible(true);
+    setCalcResult({ principal: p, interest, total, duration: d, rate: r });
   };
 
-  const handleMarkGiven = (markAsGiven: boolean) => {
-    if (markAsGiven) {
+  const shareImage = async () => {
+    if (viewShotRef.current && viewShotRef.current.capture) {
+      try {
+        const uri = await viewShotRef.current.capture();
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          await Sharing.shareAsync(uri);
+        } else {
+          showAlert('Error', 'Sharing is not available on this device.');
+        }
+      } catch (e) {
+        showAlert('Error', 'Failed to capture or share image.');
+      }
+    }
+  };
+
+  const saveToFolder = (targetFolderId: string | null) => {
+    if (calcResult) {
+      let resolvedFolderId = targetFolderId;
+
+      if (!resolvedFolderId) {
+        const currentFolders = useLedgerStore.getState().folders;
+        let generalFolder = currentFolders.find(f => f.name === 'General');
+        if (!generalFolder) {
+          useLedgerStore.getState().addFolder('General');
+          const updatedFolders = useLedgerStore.getState().folders;
+          generalFolder = updatedFolders.find(f => f.name === 'General');
+        }
+        resolvedFolderId = generalFolder?.id || null;
+      }
+
+      addLedger({
+        folderId: resolvedFolderId,
+        customerName: note.name || 'Untitled Note Ledger',
+        principal: calcResult.principal,
+        rate: calcResult.rate,
+        duration: calcResult.duration,
+        interest: calcResult.interest,
+        total: calcResult.total,
+      });
+
+      setSaveModalVisible(false);
+      
+      // Mark note as given since it's now settled and saved as a ledger
       editNote(note.id, { isGiven: true });
-      setMarkGivenDialogVisible(false);
+      
+      // Prompt user to delete or keep the original note
       setTimeout(() => setDeleteNoteDialogVisible(true), 300);
-    } else {
-      setMarkGivenDialogVisible(false);
-      // Just show results
-      showAlert('Calculation Result', `Interest: ₹${calcResult?.interest.toLocaleString()}\nTotal: ₹${calcResult?.total.toLocaleString()}`);
+    }
+  };
+
+  const handleCreateFolder = () => {
+    if (newFolderName.trim()) {
+      addFolder(newFolderName.trim());
+      setNewFolderName('');
+      setIsCreatingFolder(false);
     }
   };
 
   const handleDeleteOption = (shouldDelete: boolean) => {
     if (shouldDelete) {
       deleteNote(note.id);
+      showAlert('Success', 'Note deleted and saved to ledger.');
+    } else {
+      showAlert('Success', 'Note kept and saved to ledger.');
     }
     setDeleteNoteDialogVisible(false);
-    router.back();
+    setTimeout(() => {
+      router.replace('/(tabs)/ledger');
+    }, 1500);
   };
 
   return (
@@ -193,6 +246,57 @@ export default function NoteCalculatorScreen() {
         >
           Calculate
         </Button>
+
+        {calcResult && (
+          <View style={{ marginTop: 24 }}>
+            <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 1 }}>
+              <View style={{ padding: 4, backgroundColor: theme.colors.background }}>
+                <View style={[styles.receiptBox, { borderColor: theme.colors.primary, backgroundColor: theme.colors.background }]}>
+                  <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 16 }}>
+                    Total: ₹{calcResult.total.toFixed(2)}
+                  </Text>
+                  
+                  <Text variant="bodyLarge" style={styles.receiptLine}>• Principal: ₹{calcResult.principal.toFixed(2)}</Text>
+                  <Text variant="bodyLarge" style={styles.receiptLine}>
+                    • Interest: ₹{calcResult.interest.toFixed(2)}
+                  </Text>
+                  <Text variant="bodyLarge" style={styles.receiptLine}>
+                    • Rate: {calcResult.rate} ₹/100/mo
+                  </Text>
+                  <Text variant="bodyLarge" style={styles.receiptLine}>• Days: {calcResult.duration}</Text>
+                  
+                  <View style={styles.receiptFooter}>
+                    <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                      Date: {new Date().toLocaleDateString()}
+                    </Text>
+                    <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant, fontWeight: 'bold' }}>
+                      WealthifyPro
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </ViewShot>
+
+            <View style={styles.actionRow}>
+              <Button 
+                mode="contained" 
+                icon="share-variant" 
+                onPress={shareImage}
+                style={[styles.actionBtn, { backgroundColor: '#A855F7' }]}
+              >
+                Share Image
+              </Button>
+              <Button 
+                mode="contained" 
+                icon="content-save" 
+                onPress={() => setSaveModalVisible(true)}
+                style={[styles.actionBtn, { backgroundColor: '#10B981' }]}
+              >
+                Settle & Save
+              </Button>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       <DatePickerModal
@@ -208,26 +312,77 @@ export default function NoteCalculatorScreen() {
       />
 
       <Portal>
-        <Dialog visible={markGivenDialogVisible} onDismiss={() => setMarkGivenDialogVisible(false)} style={{ backgroundColor: theme.colors.surface }}>
-          <Dialog.Title>Update Note Status</Dialog.Title>
-          <Dialog.Content>
-            <Text variant="titleMedium" style={{ marginBottom: 8 }}>Calculation complete!</Text>
-            <Text variant="bodyMedium">Interest: ₹{calcResult?.interest.toLocaleString()}</Text>
-            <Text variant="bodyMedium">Total Amount: ₹{calcResult?.total.toLocaleString()}</Text>
-            <Text variant="bodyMedium" style={{ marginTop: 12 }}>Do you want to mark this note as given/settled?</Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => handleMarkGiven(false)}>Skip</Button>
-            <Button mode="contained" onPress={() => handleMarkGiven(true)}>Mark as Given</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+        {/* Save Ledger Modal */}
+        <Modal 
+          visible={saveModalVisible} 
+          onDismiss={() => {
+            setSaveModalVisible(false);
+            setIsCreatingFolder(false);
+          }}
+          contentContainerStyle={[styles.modalContent, { backgroundColor: theme.colors.surface }]}
+        >
+          <Text variant="titleLarge" style={{ fontWeight: 'bold', marginBottom: 16 }}>Select Folder to Save Ledger</Text>
+          
+          {isCreatingFolder ? (
+            <View style={{ marginBottom: 16 }}>
+              <TextInput
+                label="Folder Name"
+                mode="flat"
+                value={newFolderName}
+                onChangeText={setNewFolderName}
+                placeholder="e.g. John Doe"
+                autoFocus
+              />
+              <View style={[styles.actionRow, { marginTop: 12 }]}>
+                <Button onPress={() => setIsCreatingFolder(false)} style={{ flex: 1 }}>Cancel</Button>
+                <Button mode="contained" onPress={handleCreateFolder} style={{ flex: 1 }}>Create</Button>
+              </View>
+            </View>
+          ) : (
+            <>
+              {folders.length === 0 ? (
+                <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginBottom: 16 }}>
+                  No folders found. Please create one below to save your ledger.
+                </Text>
+              ) : (
+                <ScrollView style={{ maxHeight: 300, marginBottom: 16 }}>
+                  <List.Item
+                    title="None (No Folder)"
+                    left={props => <List.Icon {...props} icon="folder-remove-outline" />}
+                    onPress={() => saveToFolder(null)}
+                    style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: 8, marginBottom: 8 }}
+                  />
+                  {folders.map(folder => (
+                    <List.Item
+                      key={folder.id}
+                      title={folder.name}
+                      left={props => <List.Icon {...props} icon="folder" />}
+                      onPress={() => saveToFolder(folder.id)}
+                      style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: 8, marginBottom: 8 }}
+                    />
+                  ))}
+                </ScrollView>
+              )}
+              
+              <Button 
+                mode="outlined" 
+                icon="folder-plus" 
+                onPress={() => setIsCreatingFolder(true)} 
+                style={{ marginBottom: 8 }}
+              >
+                Create New Folder
+              </Button>
+              <Button onPress={() => setSaveModalVisible(false)}>
+                Cancel
+              </Button>
+            </>
+          )}
+        </Modal>
 
-      <Portal>
         <Dialog visible={deleteNoteDialogVisible} onDismiss={() => setDeleteNoteDialogVisible(false)} style={{ backgroundColor: theme.colors.surface }}>
-          <Dialog.Title>Keep or Delete?</Dialog.Title>
+          <Dialog.Title>Keep or Delete Note?</Dialog.Title>
           <Dialog.Content>
-            <Text variant="bodyMedium">The note has been marked as given! Do you want to keep it in your records or permanently delete it?</Text>
+            <Text variant="bodyMedium">The note has been successfully settled and saved to the Ledger! Do you want to keep the original Note in your records or permanently delete it?</Text>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => handleDeleteOption(false)}>Keep Note</Button>
@@ -247,40 +402,18 @@ export default function NoteCalculatorScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-  },
-  card: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  label: {
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  input: {
-    marginBottom: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  calcBtn: {
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
+  container: { flex: 1 },
+  content: { padding: 16, paddingBottom: 40 },
+  card: { borderRadius: 16, padding: 20, marginBottom: 24 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  dateButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8 },
+  label: { marginBottom: 8, fontWeight: '500' },
+  input: { marginBottom: 24, backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+  calcBtn: { paddingVertical: 8, borderRadius: 12 },
+  actionRow: { flexDirection: 'row', gap: 12, marginVertical: 8 },
+  actionBtn: { flex: 1, borderRadius: 8 },
+  receiptBox: { borderWidth: 1, borderRadius: 16, padding: 24, marginBottom: 16 },
+  receiptLine: { marginBottom: 8, color: '#FFF' },
+  receiptFooter: { marginTop: 24, alignItems: 'flex-end' },
+  modalContent: { margin: 20, padding: 24, borderRadius: 16 },
 });
