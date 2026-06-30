@@ -1,5 +1,6 @@
 import React from 'react';
 import { Portal, Dialog, Button, Text, useTheme } from 'react-native-paper';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 interface CustomAlertProps {
   visible: boolean;
@@ -10,6 +11,7 @@ interface CustomAlertProps {
   showCancel?: boolean;
   confirmText?: string;
   cancelText?: string;
+  requireAuth?: boolean;
 }
 
 export default function CustomAlert({ 
@@ -20,7 +22,8 @@ export default function CustomAlert({
   onConfirm, 
   showCancel = false,
   confirmText = "OK",
-  cancelText = "Cancel"
+  cancelText = "Cancel",
+  requireAuth = false
 }: CustomAlertProps) {
   const theme = useTheme();
   
@@ -47,7 +50,17 @@ export default function CustomAlert({
           )}
           <Button 
             mode="contained" 
-            onPress={onConfirm || onDismiss} 
+            onPress={async () => {
+              if (requireAuth) {
+                const result = await LocalAuthentication.authenticateAsync({
+                  promptMessage: 'Security PIN / Biometrics required to confirm',
+                  fallbackLabel: 'Use PIN',
+                });
+                if (!result.success) return;
+              }
+              if (onConfirm) onConfirm();
+              else onDismiss();
+            }} 
             style={{ borderRadius: 12, paddingHorizontal: 16 }}
             textColor={theme.colors.onPrimary}
           >

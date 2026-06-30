@@ -34,10 +34,11 @@ export default function EmiFolderScreen() {
     onConfirm: () => {},
     showCancel: false,
     confirmText: 'OK',
+    requireAuth: false,
   });
 
   const showAlert = (config: any) => {
-    setAlertConfig({ visible: true, showCancel: false, confirmText: 'OK', onConfirm: hideAlert, ...config });
+    setAlertConfig({ visible: true, showCancel: false, confirmText: 'OK', requireAuth: false, onConfirm: hideAlert, ...config });
   };
 
   const hideAlert = () => {
@@ -50,6 +51,7 @@ export default function EmiFolderScreen() {
       message: `Are you sure you want to delete "${folder?.name}" and all its EMIs? This action cannot be undone.`,
       showCancel: true,
       confirmText: 'Delete Folder',
+      requireAuth: true,
       onConfirm: () => {
         const { deleteFolder } = useEmiStore.getState();
         deleteFolder(folder!.id);
@@ -64,6 +66,7 @@ export default function EmiFolderScreen() {
       message: 'Are you sure you want to permanently delete this calculation receipt?',
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         deleteEmi(emiId);
         setSelectedEmi(null);
@@ -118,6 +121,7 @@ export default function EmiFolderScreen() {
       message: `Are you sure you want to delete ${selectedEmiIds.length} EMIs?`,
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         selectedEmiIds.forEach(i => deleteEmi(i));
         exitSelection();
@@ -345,6 +349,7 @@ Sent via WealthifyPro`;
         onConfirm={alertConfig.onConfirm}
         showCancel={alertConfig.showCancel}
         confirmText={alertConfig.confirmText}
+        requireAuth={alertConfig.requireAuth}
       />
     </View>
   );

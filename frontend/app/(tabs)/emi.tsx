@@ -33,10 +33,11 @@ export default function EmiScreen() {
     onConfirm: () => {},
     showCancel: false,
     confirmText: 'OK',
+    requireAuth: false,
   });
 
   const showAlert = (config: any) => {
-    setAlertConfig({ visible: true, showCancel: false, confirmText: 'OK', onConfirm: hideAlert, ...config });
+    setAlertConfig({ visible: true, showCancel: false, confirmText: 'OK', requireAuth: false, onConfirm: hideAlert, ...config });
   };
 
   const hideAlert = () => {
@@ -104,9 +105,10 @@ export default function EmiScreen() {
     const totalCount = selectedEmiIds.length + selectedFolderIds.length;
     showAlert({
       title: 'Delete Selected?',
-      message: `Are you sure you want to delete ${totalCount} items? (Folders will delete all their contents too)`,
+      message: `Are you sure you want to permanently delete ${totalCount} items? (Folders will delete all their contents too)`,
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         selectedEmiIds.forEach(id => deleteEmi(id));
         selectedFolderIds.forEach(id => deleteFolder(id));
@@ -141,6 +143,7 @@ export default function EmiScreen() {
       message: `Are you sure you want to delete "${name}"? All EMIs inside it will be permanently deleted.`,
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         deleteFolder(id);
         hideAlert();
@@ -201,7 +204,7 @@ export default function EmiScreen() {
             <IconButton icon="arrow-left" size={24} onPress={() => { setIsSearchActive(false); setSearchQuery(''); }} />
           ) : undefined,
           headerRight: () => (
-            <View style={{ flexDirection: 'row' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
               {selectionMode ? (
                 <View style={{flexDirection: 'row'}}>
                   <IconButton 
@@ -218,19 +221,21 @@ export default function EmiScreen() {
                     icon="magnify"
                     iconColor={theme.colors.onSurface}
                     size={24}
+                    style={{ margin: 0, marginRight: 8 }}
                     onPress={() => setIsSearchActive(true)}
                   />
                   <IconButton
                     icon="folder-plus"
                     iconColor={theme.colors.onSurface}
                     size={24}
+                    style={{ margin: 0, marginRight: 16 }}
                     onPress={() => {
                       setEditingFolderId(null);
                       setNewFolderName('');
                       setDialogVisible(true);
                     }}
                   />
-                  <TouchableOpacity onPress={() => router.push('/settings')} style={{ marginRight: 12, justifyContent: 'center' }}>
+                  <TouchableOpacity onPress={() => router.push('/settings')} style={{ justifyContent: 'center' }}>
                     {user?.profilePictureUrl ? (
                       <Avatar.Image size={28} source={{ uri: user.profilePictureUrl }} />
                     ) : (
@@ -369,6 +374,7 @@ export default function EmiScreen() {
         onConfirm={alertConfig.onConfirm}
         showCancel={alertConfig.showCancel}
         confirmText={alertConfig.confirmText}
+        requireAuth={alertConfig.requireAuth}
       />
 
       {/* Floating Action Button for Global Calculator */}

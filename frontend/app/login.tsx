@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Text, TextInput, Button, useTheme, Surface, Checkbox, ActivityIndicator } from 'react-native-paper';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore, api } from '@/store/authStore';
+import { useAlertStore } from '@/store/alertStore';
 import * as Device from 'expo-device';
 import { useNoteStore } from '@/store/noteStore';
 import { useLedgerStore } from '@/store/ledgerStore';
@@ -38,7 +39,12 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!emailOrPhone || !password || !securityKey) {
-      alert('Please fill email/phone, password, and security key fields');
+      useAlertStore.getState().showAlert({ title: 'Error', message: 'Please fill email/phone, password, and security key fields' });
+      return;
+    }
+
+    if (securityKey.length < 4) {
+      useAlertStore.getState().showAlert({ title: 'Error', message: 'Security Key must be at least 4 characters long' });
       return;
     }
     
@@ -83,7 +89,7 @@ export default function LoginScreen() {
 
       router.replace('/(tabs)');
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Login failed. Please check your credentials.');
+      useAlertStore.getState().showAlert({ title: 'Error', message: error.response?.data?.message || 'Login failed. Please check your credentials.' });
     } finally {
       setLoading(false);
     }
@@ -97,8 +103,8 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         
         <View style={styles.headerContainer}>
-          <View style={[styles.logoPlaceholder, { backgroundColor: theme.colors.primaryContainer }]}>
-            <Text variant="displayMedium" style={{ color: theme.colors.primary, fontWeight: '900' }}>W</Text>
+          <View style={[styles.logoPlaceholder, { backgroundColor: theme.colors.primaryContainer, overflow: 'hidden' }]}>
+            <Image source={require('../assets/images/favicon.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
           </View>
           <Text variant="displaySmall" style={{ color: theme.colors.onBackground, fontWeight: '800', marginTop: 16 }}>WealthifyPro</Text>
           <Text variant="titleMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>Welcome back! Please login.</Text>

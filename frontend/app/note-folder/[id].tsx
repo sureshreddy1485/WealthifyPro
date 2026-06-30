@@ -33,10 +33,11 @@ export default function NoteFolderScreen() {
     onConfirm: () => {},
     showCancel: false,
     confirmText: 'OK',
+    requireAuth: false,
   });
 
   const showAlert = (config: any) => {
-    setAlertConfig({ visible: true, showCancel: false, confirmText: 'OK', onConfirm: hideAlert, ...config });
+    setAlertConfig({ visible: true, showCancel: false, confirmText: 'OK', requireAuth: false, onConfirm: hideAlert, ...config });
   };
 
   const hideAlert = () => {
@@ -49,6 +50,7 @@ export default function NoteFolderScreen() {
       message: 'Are you sure you want to permanently delete this note?',
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         cancelNoteNotification(noteId); // stop daily reminder
         deleteNote(noteId);
@@ -63,6 +65,7 @@ export default function NoteFolderScreen() {
       message: `Are you sure you want to delete "${folder?.name}"? All notes inside it will be permanently deleted.`,
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         if (id) deleteFolder(id);
         hideAlert();
@@ -130,6 +133,7 @@ export default function NoteFolderScreen() {
       message: `Are you sure you want to delete ${selectedNoteIds.length} notes?`,
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         selectedNoteIds.forEach(id => {
           cancelNoteNotification(id); // stop daily reminder
@@ -282,6 +286,7 @@ export default function NoteFolderScreen() {
         onConfirm={alertConfig.onConfirm}
         showCancel={alertConfig.showCancel}
         confirmText={alertConfig.confirmText}
+        requireAuth={alertConfig.requireAuth}
       />
     </View>
   );

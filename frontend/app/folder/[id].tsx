@@ -34,10 +34,11 @@ export default function FolderScreen() {
     onConfirm: () => {},
     showCancel: false,
     confirmText: 'OK',
+    requireAuth: false,
   });
 
   const showAlert = (config: any) => {
-    setAlertConfig({ visible: true, showCancel: false, confirmText: 'OK', onConfirm: hideAlert, ...config });
+    setAlertConfig({ visible: true, showCancel: false, confirmText: 'OK', requireAuth: false, onConfirm: hideAlert, ...config });
   };
 
   const hideAlert = () => {
@@ -50,6 +51,7 @@ export default function FolderScreen() {
       message: `Are you sure you want to delete "${folder?.name}" and all its ledgers? This action cannot be undone.`,
       showCancel: true,
       confirmText: 'Delete Folder',
+      requireAuth: true,
       onConfirm: () => {
         const { deleteFolder } = useLedgerStore.getState();
         deleteFolder(folder!.id);
@@ -64,6 +66,7 @@ export default function FolderScreen() {
       message: 'Are you sure you want to permanently delete this calculation receipt?',
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         deleteLedger(ledgerId);
         setSelectedLedger(null);
@@ -118,6 +121,7 @@ export default function FolderScreen() {
       message: `Are you sure you want to delete ${selectedLedgerIds.length} ledgers?`,
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         selectedLedgerIds.forEach(id => deleteLedger(id));
         exitSelection();
@@ -359,6 +363,7 @@ Sent via WealthifyPro`;
         onConfirm={alertConfig.onConfirm}
         showCancel={alertConfig.showCancel}
         confirmText={alertConfig.confirmText}
+        requireAuth={alertConfig.requireAuth}
       />
     </View>
   );

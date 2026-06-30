@@ -5,6 +5,10 @@ import axios from 'axios';
 
 import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
+import { useNoteStore } from './noteStore';
+import { useLedgerStore } from './ledgerStore';
+import { useEmiStore } from './emiStore';
+import { useSyncStore } from './syncStore';
 
 const API_URL = 'https://wealthifypro.onrender.com/api';
 
@@ -50,6 +54,12 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         delete api.defaults.headers.common['Authorization'];
         set({ isAuthenticated: false, user: null, token: null });
+        
+        // Clear all local user data to prevent cross-account pollution
+        useNoteStore.setState({ folders: [], notes: [] });
+        useLedgerStore.setState({ folders: [], ledgers: [] });
+        useEmiStore.setState({ folders: [], emis: [] });
+        useSyncStore.setState({ status: 'idle', lastSyncedAt: null });
       },
       updateUser: (user) => set({ user }),
     }),

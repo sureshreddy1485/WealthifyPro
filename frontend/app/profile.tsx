@@ -77,6 +77,21 @@ export default function ProfileScreen() {
       useAlertStore.getState().showAlert({ title: 'Error', message: 'Please fill all fields' });
       return;
     }
+
+    if (securityKey.length < 4) {
+      useAlertStore.getState().showAlert({ title: 'Error', message: 'Security Key must be at least 4 characters long' });
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      useAlertStore.getState().showAlert({ 
+        title: 'Weak Password', 
+        message: 'New password must be at least 8 characters long and contain at least 1 uppercase letter, 1 number, and 1 special character.' 
+      });
+      return;
+    }
+
     setLoadingPassword(true);
     try {
       await api.post('/auth/change-password', {
@@ -117,6 +132,7 @@ export default function ProfileScreen() {
       showCancel: true,
       cancelText: "Cancel",
       confirmText: "Delete",
+      requireAuth: true,
       onConfirm: async () => {
         try {
           await api.delete('/users/profile');
@@ -265,7 +281,6 @@ export default function ProfileScreen() {
                   secureTextEntry={!showPassword}
                   style={styles.input}
                   left={<TextInput.Icon icon="lock-reset" />}
-                  right={<TextInput.Icon icon={showPassword ? "eye-off" : "eye"} onPress={() => setShowPassword(!showPassword)} />}
                 />
                 <TextInput
                   label="Security Key"
@@ -275,7 +290,6 @@ export default function ProfileScreen() {
                   secureTextEntry={!showPassword}
                   style={styles.input}
                   left={<TextInput.Icon icon="key-outline" />}
-                  right={<TextInput.Icon icon={showPassword ? "eye-off" : "eye"} onPress={() => setShowPassword(!showPassword)} />}
                 />
               </Dialog.Content>
               <Dialog.Actions>

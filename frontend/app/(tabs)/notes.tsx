@@ -48,10 +48,11 @@ export default function NotesScreen() {
     onConfirm: () => {},
     showCancel: false,
     confirmText: 'OK',
+    requireAuth: false,
   });
 
   const showAlert = (config: any) => {
-    setAlertConfig({ visible: true, showCancel: false, confirmText: 'OK', onConfirm: hideAlert, ...config });
+    setAlertConfig({ visible: true, showCancel: false, confirmText: 'OK', requireAuth: false, onConfirm: hideAlert, ...config });
   };
 
   const hideAlert = () => {
@@ -85,6 +86,7 @@ export default function NotesScreen() {
       message: `Are you sure you want to delete "${name}"? All notes inside it will be permanently deleted.`,
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         deleteFolder(id);
         hideAlert();
@@ -336,9 +338,10 @@ export default function NotesScreen() {
     const totalCount = selectedNoteIds.length + selectedFolderIds.length;
     showAlert({
       title: 'Delete Selected?',
-      message: `Are you sure you want to delete ${totalCount} items? (Folders will delete all their contents too)`,
+      message: `Are you sure you want to permanently delete ${totalCount} items? (Folders will delete all their contents too)`,
       showCancel: true,
       confirmText: 'Delete',
+      requireAuth: true,
       onConfirm: () => {
         selectedNoteIds.forEach(id => deleteNote(id));
         selectedFolderIds.forEach(id => deleteFolder(id));
@@ -414,7 +417,7 @@ export default function NotesScreen() {
             <IconButton icon="arrow-left" size={24} onPress={() => { setIsSearchActive(false); setSearchQuery(''); }} />
           ) : undefined,
           headerRight: () => (
-            <View style={{ flexDirection: 'row' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
               {selectionMode ? (
                 <>
                   <IconButton 
@@ -432,25 +435,28 @@ export default function NotesScreen() {
                     icon="magnify"
                     iconColor={theme.colors.onSurface}
                     size={24}
+                    style={{ margin: 0, marginRight: 8 }}
                     onPress={() => setIsSearchActive(true)}
                   />
                   <IconButton
                     icon="file-excel-outline"
                     iconColor={theme.colors.secondary}
                     size={24}
+                    style={{ margin: 0, marginRight: 8 }}
                     onPress={handleImportExcel}
                   />
                   <IconButton
                     icon="folder-plus"
                     iconColor={theme.colors.onSurface}
                     size={24}
+                    style={{ margin: 0, marginRight: 16 }}
                     onPress={() => {
                       setEditingFolderId(null);
                       setNewFolderName('');
                       setDialogVisible(true);
                     }}
                   />
-                  <TouchableOpacity onPress={() => router.push('/settings')} style={{ marginRight: 12, justifyContent: 'center' }}>
+                  <TouchableOpacity onPress={() => router.push('/settings')} style={{ justifyContent: 'center' }}>
                     {user?.profilePictureUrl ? (
                       <Avatar.Image size={28} source={{ uri: user.profilePictureUrl }} />
                     ) : (
@@ -550,6 +556,7 @@ export default function NotesScreen() {
                           message: 'Are you sure you want to permanently delete this note?',
                           showCancel: true,
                           confirmText: 'Delete',
+                          requireAuth: true,
                           onConfirm: () => {
                             cancelNoteNotification(noteId);
                             deleteNote(noteId);
@@ -684,6 +691,7 @@ export default function NotesScreen() {
         onConfirm={alertConfig.onConfirm}
         showCancel={alertConfig.showCancel}
         confirmText={alertConfig.confirmText}
+        requireAuth={alertConfig.requireAuth}
       />
 
       {/* Floating Action Button for Creating Note */}

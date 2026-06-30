@@ -125,8 +125,8 @@ export default function SettingsScreen() {
       } else {
         showAlert({ title: 'Up to Date', message: 'You are already on the latest version.' });
       }
-    } catch (error) {
-      showAlert({ title: 'Update Error', message: 'Failed to check for updates. Make sure you have an active internet connection.' });
+    } catch (error: any) {
+      showAlert({ title: 'Update Error', message: `Failed to check for updates: ${error?.message || 'Unknown error'}` });
     }
   };
 

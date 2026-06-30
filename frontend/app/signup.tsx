@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Text, TextInput, Button, useTheme, Surface, ActivityIndicator } from 'react-native-paper';
 import { router } from 'expo-router';
 import { useAuthStore, api } from '@/store/authStore';
+import { useAlertStore } from '@/store/alertStore';
 import * as Device from 'expo-device';
 
 export default function SignupScreen() {
@@ -21,11 +22,26 @@ export default function SignupScreen() {
 
   const handleSignup = async () => {
     if (!name || !emailOrPhone || !password || !confirmPassword || !securityKey) {
-      alert('Please fill all fields');
+      useAlertStore.getState().showAlert({ title: 'Error', message: 'Please fill all fields' });
       return;
     }
+
+    if (securityKey.length < 4) {
+      useAlertStore.getState().showAlert({ title: 'Error', message: 'Security Key must be at least 4 characters long' });
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      useAlertStore.getState().showAlert({ 
+        title: 'Weak Password', 
+        message: 'Password must be at least 8 characters long and contain at least 1 uppercase letter, 1 number, and 1 special character.' 
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      useAlertStore.getState().showAlert({ title: 'Error', message: 'Passwords do not match' });
       return;
     }
 
@@ -61,7 +77,7 @@ export default function SignupScreen() {
       router.replace('/(tabs)');
       
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Registration failed.');
+      useAlertStore.getState().showAlert({ title: 'Error', message: error.response?.data?.message || 'Registration failed.' });
     } finally {
       setLoading(false);
     }
@@ -75,8 +91,8 @@ export default function SignupScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         
         <View style={styles.headerContainer}>
-          <View style={[styles.logoPlaceholder, { backgroundColor: theme.colors.primaryContainer }]}>
-            <Text variant="displayMedium" style={{ color: theme.colors.primary, fontWeight: '900' }}>W</Text>
+          <View style={[styles.logoPlaceholder, { backgroundColor: theme.colors.primaryContainer, overflow: 'hidden' }]}>
+            <Image source={require('../assets/images/favicon.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
           </View>
           <Text variant="displaySmall" style={{ color: theme.colors.onBackground, fontWeight: '800', marginTop: 16 }}>Create Account</Text>
           <Text variant="titleMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>Join WealthifyPro today.</Text>

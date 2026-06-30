@@ -24,6 +24,7 @@ function GlobalAlert() {
       showCancel={alertState.showCancel}
       confirmText={alertState.confirmText}
       cancelText={alertState.cancelText}
+      requireAuth={alertState.requireAuth}
       onConfirm={() => {
         alertState.onConfirm();
         alertState.hideAlert();
