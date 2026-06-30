@@ -83,8 +83,8 @@ export default function NoteCalculatorScreen() {
     const p = note.amount;
     const d = durationDays;
     
-    // Rate is ₹ per day per ₹1000
-    const dailyRateMultiplier = r / 1000;
+    // Rate is ₹ per ₹100 per month
+    const dailyRateMultiplier = (r / 100) / 30;
     const interest = p * dailyRateMultiplier * d;
     const total = p + interest;
 
@@ -174,7 +174,7 @@ export default function NoteCalculatorScreen() {
         </View>
 
         <Text variant="labelLarge" style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>
-          Interest Rate (₹ per day per ₹1000) *
+          Interest Rate (₹ per ₹100 per month) *
         </Text>
         <TextInput
           mode="flat"

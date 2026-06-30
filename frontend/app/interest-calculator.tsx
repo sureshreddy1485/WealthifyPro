@@ -102,8 +102,8 @@ export default function InterestCalculatorScreen() {
     
     // Determine daily rate multiplier
     // If 'percent': Rate is % per annum -> Daily rate = (R / 100) / 365
-    // If 'rupees': Rate is ₹ per ₹1000 per day -> Daily rate = R / 1000
-    const dailyRateMultiplier = rateType === 'percent' ? (r / 100) / 365 : (r / 1000);
+    // If 'rupees': Rate is ₹ per ₹100 per month -> Daily rate = (R / 100) / 30
+    const dailyRateMultiplier = rateType === 'percent' ? (r / 100) / 365 : (r / 100) / 30;
 
     if (mode === 'simple') {
       interest = p * dailyRateMultiplier * d;
@@ -307,7 +307,7 @@ export default function InterestCalculatorScreen() {
         </View>
 
         <Text variant="labelLarge" style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>
-          {rateType === 'rupees' ? 'Rate (₹ per day per ₹1000)' : 'Rate (% per annum)'}
+          {rateType === 'rupees' ? 'Rate (₹ per ₹100 per month)' : 'Rate (% per annum)'}
         </Text>
         <TextInput
           mode="flat"
@@ -353,7 +353,7 @@ export default function InterestCalculatorScreen() {
                     • Interest: ₹{calcResult.interest.toFixed(2)} ({calcResult.mode === 'simple' ? 'SI' : 'CI'})
                   </Text>
                   <Text variant="bodyLarge" style={styles.receiptLine}>
-                    • Rate: {calcResult.rate}{calcResult.rateType === 'percent' ? '% P.A' : ' ₹/1000/day'}
+                    • Rate: {calcResult.rate}{calcResult.rateType === 'percent' ? '% P.A' : ' ₹/100/mo'}
                   </Text>
                   <Text variant="bodyLarge" style={styles.receiptLine}>• Days: {calcResult.duration}</Text>
                   
