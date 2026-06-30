@@ -6,14 +6,7 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
 
-// Dynamically determine the API URL based on the Expo bundler's host IP
-// This ensures the app always connects to the backend running on the same PC, even if the IP changes!
-let API_URL = 'http://192.168.1.6:3000/api'; 
-const hostUri = Constants.expoConfig?.hostUri;
-if (hostUri) {
-  const ip = hostUri.split(':')[0];
-  API_URL = `http://${ip}:3000/api`;
-}
+const API_URL = 'https://wealthifypro.onrender.com/api';
 
 export const api = axios.create({
   baseURL: API_URL,
