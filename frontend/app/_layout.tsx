@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import * as Updates from 'expo-updates';
 import { useDueNotifications, setupNotificationChannel } from '@/hooks/useDueNotifications';
 import AppLockGuard from '@/components/AppLockGuard';
 import CustomAlert from '@/components/CustomAlert';
@@ -80,9 +81,38 @@ function useAutoSync() {
   }, []);
 }
 
+function useAutoUpdateCheck() {
+  useEffect(() => {
+    if (__DEV__) return;
+    
+    const checkUpdate = async () => {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          useAlertStore.getState().showAlert({
+            title: 'Update Available!',
+            message: 'A new version has been downloaded. Would you like to restart the app to apply it?',
+            confirmText: 'Restart Now',
+            cancelText: 'Later',
+            showCancel: true,
+            onConfirm: () => Updates.reloadAsync(),
+          });
+        }
+      } catch (e) {
+        console.log('Background update check failed', e);
+      }
+    };
+    
+    // Slight delay to not block initial render
+    setTimeout(checkUpdate, 3000);
+  }, []);
+}
+
 function AppInitializer() {
   useDueNotifications();
   useAutoSync();
+  useAutoUpdateCheck();
 
   useEffect(() => {
     setupNotificationChannel();
